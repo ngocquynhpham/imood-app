@@ -13,6 +13,12 @@
 - [4. npx vs npm](#4-npx-vs-npm)
 - [5. dependencies vs devDependencies](#5-dependencies-vs-devdependencies)
 - [6. Vulnerabilities (lỗ hổng bảo mật)](#6-vulnerabilities-lỗ-hổng-bảo-mật)
+- [7. export và các cách viết](#7-export-và-các-cách-viết)
+- [8. as const](#8-as-const)
+- [9. UPPER_SNAKE_CASE](#9-upper_snake_case)
+- [10. Record\<K, V\> và Mapped Type](#10-recordk-v-và-mapped-type)
+- [11. TypeScript Utility Types](#11-typescript-utility-types)
+- [12. type vs interface](#12-type-vs-interface)
 
 ---
 
@@ -400,6 +406,356 @@ npm audit fix --force   # ← có thể break project vì force update major ver
 - ❌ Chạy `npm audit fix --force` ngay khi thấy warning → có thể break project
 - ❌ Lo lắng quá với `moderate` trong `devDependencies` → không cần thiết
 - ✅ Chỉ cần lo khi `high`/`critical` trong `dependencies`
+
+---
+
+## 7. export và các cách viết
+
+**Học ngày**: 2026-06-17
+**Nguồn**: Tự học qua project imood-app
+
+### Khái niệm đơn giản
+
+Mặc định mọi file TypeScript đóng kín — file khác không đọc được. `export` = mở cửa cho file khác vào lấy.
+
+### Chi tiết / Ví dụ
+
+```ts
+// Cách 1: export khi khai báo (phổ biến nhất)
+export const MOOD_LEVELS = [...]
+export type MoodLevel = 1 | 2 | 3 | 4 | 5
+
+// Cách 2: export ở cuối file
+const MOOD_LEVELS = [...]
+export { MOOD_LEVELS }
+
+// Cách 3: export default (chỉ 1 lần per file, không cần đặt tên khi import)
+export default MOOD_LEVELS
+
+// Cách 4: export nhiều thứ cuối file
+export { MOOD_LEVELS, MOOD_COLORS }
+```
+
+Import tương ứng:
+```ts
+// Từ named export (cách 1, 2, 4)
+import { MOOD_LEVELS, MOOD_COLORS } from '@/lib/constants'
+
+// Từ default export (cách 3)
+import MOOD_LEVELS from '@/lib/constants'  // tên tự đặt tùy ý
+```
+
+### Khi nào dùng cái nào
+
+- **Named export** (cách 1): dùng cho constants, utils, types — import được từng cái
+- **Default export** (cách 3): dùng cho React components — mỗi file 1 component chính
+
+### Common Mistakes
+
+- ❌ Quên `export` → file khác import báo lỗi ngay
+- ❌ Dùng default export cho constants → khó tìm tên khi import
+
+---
+
+## 8. as const
+
+**Học ngày**: 2026-06-17
+**Nguồn**: Tự học qua project imood-app
+
+### Khái niệm đơn giản
+
+`as const` = "đóng băng" giá trị — TypeScript hiểu chính xác giá trị thật thay vì kiểu chung chung.
+
+### Chi tiết / Ví dụ
+
+```ts
+// Không có as const → TypeScript hiểu kiểu chung
+const MOOD_LEVELS = [{ level: 1, label: 'Rất tệ' }]
+// level: number (bất kỳ số nào)
+// label: string (bất kỳ string nào)
+
+// Có as const → TypeScript hiểu chính xác
+const MOOD_LEVELS = [{ level: 1, label: 'Rất tệ' }] as const
+// level: 1 (chỉ đúng số 1)
+// label: 'Rất tệ' (chỉ đúng string này)
+```
+
+### Analogy dễ nhớ
+
+Như khóa tủ sau khi xếp đồ xong — không ai thêm/bớt/sửa được nữa.
+
+### Khi nào dùng
+
+- Array/object là config cố định không bao giờ thay đổi
+- Muốn TypeScript bảo vệ chặt hơn, không cho sửa nhầm
+
+---
+
+## 9. UPPER_SNAKE_CASE
+
+**Học ngày**: 2026-06-17
+**Nguồn**: Tự học qua project imood-app
+
+### Khái niệm đơn giản
+
+Quy ước đặt tên để nhìn vào **biết ngay loại biến** — không phải bắt buộc nhưng cả thế giới dev đều làm vậy.
+
+### Chi tiết / Ví dụ
+
+```ts
+UPPER_SNAKE_CASE  → constant (giá trị không đổi)
+camelCase         → biến thường, function, hook
+PascalCase        → component React, interface, type
+kebab-case        → tên file, tên folder, CSS class
+```
+
+```ts
+// Nhìn vào tên → biết ngay vai trò
+const MOOD_COLORS = { ... }      // constant
+const moodLevel = 3              // biến thường
+function useMoodData() { ... }   // hook
+interface MoodEntry { ... }      // type/interface
+```
+
+---
+
+## 10. Record\<K, V\> và Mapped Type
+
+**Học ngày**: 2026-06-17
+**Nguồn**: Tự học qua project imood-app
+
+### Khái niệm đơn giản
+
+`Record<K, V>` = tạo một object mà **key** phải là kiểu K, **value** phải là kiểu V.
+
+### Chi tiết / Ví dụ
+
+```ts
+// Record<MoodLevel, string> nghĩa là:
+// - key phải là 1 | 2 | 3 | 4 | 5
+// - value phải là string
+// - phải có đủ tất cả các key
+
+const MOOD_COLORS: Record<MoodLevel, string> = {
+  1: '#FF6B6B',
+  2: '#FFB347',
+  3: '#FFD700',
+  4: '#90EE90',
+  5: '#4CAF50',
+}
+
+// Thiếu key 5 → TypeScript báo lỗi ngay
+// Key là 6 → TypeScript báo lỗi ngay
+// Value là number → TypeScript báo lỗi ngay
+```
+
+### 3 cách viết tương đương
+
+```ts
+// Cách 1: Record (ngắn gọn, phổ biến)
+const MOOD_COLORS: Record<MoodLevel, string> = { ... }
+
+// Cách 2: Mapped Type (Record là shorthand của cái này)
+const MOOD_COLORS: { [key in MoodLevel]: string } = { ... }
+
+// Cách 3: Index Signature (kém an toàn hơn)
+const MOOD_COLORS: { [key: number]: string } = { ... }
+// ← không ép buộc phải có đủ key 1-5
+```
+
+| Cách | An toàn | Ngắn gọn | Phổ biến |
+|---|---|---|---|
+| `Record<K, V>` | ✅ | ✅ | ✅ |
+| `{ [key in K]: V }` | ✅ | ❌ | thỉnh thoảng |
+| `{ [key: number]: V }` | ❌ | ✅ | ít dùng |
+
+### Analogy dễ nhớ
+
+`Record` như **checklist bắt buộc** — TypeScript điểm danh từng key, thiếu 1 là nhắc liền.
+
+### Common Mistakes
+
+- ❌ Dùng `{ [key: number]: string }` khi muốn ép buộc đủ key → dễ bị miss
+- ✅ Dùng `Record<MoodLevel, string>` để TypeScript tự check cho mình
+
+---
+
+## 11. TypeScript Utility Types
+
+**Học ngày**: 2026-06-17
+**Nguồn**: Tự học qua project imood-app
+
+### Khái niệm đơn giản
+
+Utility Types = các kiểu type **có sẵn trong TypeScript**, giúp biến đổi type có sẵn thành type mới — không cần viết lại từ đầu.
+
+TypeScript có 20+ utility types, nhưng chỉ cần nhớ 7 cái hay dùng nhất.
+
+### Chi tiết / Ví dụ
+
+```ts
+// Type gốc dùng làm ví dụ
+type User = {
+  id: string
+  name: string
+  email: string
+  age?: number
+}
+```
+
+**`Partial<T>`** — tất cả fields thành optional
+```ts
+type UpdateUser = Partial<User>
+// { id?: string, name?: string, email?: string, age?: number }
+// Dùng khi: form update — không cần điền hết
+```
+
+**`Required<T>`** — tất cả fields thành bắt buộc
+```ts
+type StrictUser = Required<User>
+// { id: string, name: string, email: string, age: number }
+// Dùng khi: đảm bảo không field nào bị thiếu
+```
+
+**`Pick<T, K>`** — chỉ lấy một số fields
+```ts
+type UserPreview = Pick<User, 'id' | 'name'>
+// { id: string, name: string }
+// Dùng khi: hiển thị card — chỉ cần id và name
+```
+
+**`Omit<T, K>`** — bỏ một số fields
+```ts
+type NewUser = Omit<User, 'id'>
+// { name: string, email: string, age?: number }
+// Dùng khi: tạo mới — id do server tự gen
+```
+
+**`Record<K, V>`** — tạo object với key/value định sẵn
+```ts
+type MoodColors = Record<MoodLevel, string>
+// { 1: string, 2: string, 3: string, 4: string, 5: string }
+// Dùng khi: mapping, lookup table
+```
+
+**`Readonly<T>`** — không cho sửa sau khi tạo
+```ts
+type FrozenUser = Readonly<User>
+// frozenUser.name = 'abc' → lỗi TypeScript
+// Dùng khi: config, constants không muốn ai sửa nhầm
+```
+
+**`ReturnType<T>`** — lấy type từ giá trị return của function
+```ts
+function getMood() { return { level: 1, label: 'Tốt' } }
+type Mood = ReturnType<typeof getMood>
+// { level: number, label: string }
+// Dùng khi: không muốn khai báo type riêng, lấy thẳng từ function
+```
+
+### Cách nhớ nhanh
+
+| Muốn làm gì | Dùng cái gì |
+|---|---|
+| Bớt bắt buộc | `Partial` |
+| Thêm bắt buộc | `Required` |
+| Lấy một số field | `Pick` |
+| Bỏ một số field | `Omit` |
+| Mapping key→value | `Record` |
+| Khóa không cho sửa | `Readonly` |
+| Lấy type từ function | `ReturnType` |
+
+### Điểm mạnh chính
+
+Khi type gốc thay đổi → type con **tự động cập nhật**, không cần sửa thủ công từng chỗ.
+
+```ts
+// User thêm field mới
+type User = { id: string, name: string, phone: string }
+
+// Partial<User> tự động có phone? luôn — không cần sửa
+type UpdateUser = Partial<User>
+```
+
+### Common Mistakes
+
+- ❌ Khai báo lại type thủ công thay vì dùng utility type → khi type gốc đổi phải sửa nhiều chỗ
+- ❌ Nhầm `Pick` và `Omit` → Pick = lấy cái muốn giữ, Omit = bỏ cái không cần
+
+---
+
+## 12. type vs interface
+
+**Học ngày**: 2026-06-17
+**Nguồn**: Tự học qua project imood-app
+
+### Khái niệm đơn giản
+
+Cả 2 đều dùng để định nghĩa kiểu dữ liệu trong TypeScript — nhưng mỗi cái có thế mạnh riêng.
+
+### Quy tắc nhớ nhanh
+
+```
+type      → union, primitive, computed
+interface → object shape
+```
+
+### Chi tiết / Ví dụ
+
+```ts
+// ✅ Dùng type cho:
+type MoodLevel = 1 | 2 | 3 | 4 | 5           // union
+type ID = string                               // primitive alias
+type MoodColors = Record<MoodLevel, string>    // computed
+
+// ✅ Dùng interface cho:
+interface MoodEntry {                          // object shape
+  id: string
+  date: string
+  level: MoodLevel
+  note?: string
+  createdAt: number
+}
+```
+
+### Khác nhau quan trọng
+
+**interface có thể extends (kế thừa):**
+```ts
+interface Animal { name: string }
+interface Dog extends Animal { breed: string }
+// Dog = { name: string, breed: string }
+```
+
+**interface có thể merge (declaration merging):**
+```ts
+interface User { id: string }
+interface User { name: string }
+// Tự ghép lại: User = { id: string, name: string }
+```
+
+**type KHÔNG làm được 2 thứ trên:**
+```ts
+type User = { id: string }
+type User = { name: string } // ❌ lỗi: duplicate identifier
+```
+
+### Trong imood-app áp dụng thế nào
+
+```ts
+// type → vì là union
+type MoodLevel = 1 | 2 | 3 | 4 | 5
+
+// interface → vì là object shape
+interface MoodEntry { id: string, date: string, ... }
+interface MoodLevelConfig { level: MoodLevel, label: string, ... }
+```
+
+### Common Mistakes
+
+- ❌ Dùng `interface` cho union: `interface X = 1 | 2 | 3` → lỗi cú pháp
+- ❌ Khai báo `type` 2 lần cùng tên → lỗi duplicate
+- ✅ Object shape → `interface`, còn lại → `type`
 
 ---
 

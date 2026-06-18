@@ -128,3 +128,24 @@
     @apply font-sans;
   }
 }
+
+@layer base {
+  :root {
+    /* Dark theme mặc định cho imood.app */
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
+
+    /* Mood colors — dùng được trong cả Tailwind lẫn CSS */
+    --mood-1: #FF6B6B;
+    --mood-2: #FFB347;
+    --mood-3: #FFD700;
+    --mood-4: #90EE90;
+    --mood-5: #4CAF50;
+    --mood-empty: #2A2A2A;
+
+    /* Surface colors */
+    --surface-1: 0 0% 12%;   /* card, panel */
+    --surface-2: 0 0% 16%;   /* hover state */
+    --surface-3: 0 0% 20%;   /* border */
+  }
+}
